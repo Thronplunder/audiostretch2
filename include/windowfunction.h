@@ -2,7 +2,7 @@
 #include<numbers>
 #include<cmath>
 
-
+#pragma once
 namespace audiostretch{
 
     enum class windowType{

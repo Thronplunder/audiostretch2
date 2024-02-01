@@ -32,7 +32,7 @@ class ola{
 
     template<typename T>
     void ola<T>::process(std::vector<T> &input, std::vector<T> &output){
-        //null out output and resize it
+        //null out output and resize it if necessary
         if(output.size() != input.size() * stretchFactor){
         output.resize(input.size() * stretchFactor);
         }

@@ -6,6 +6,7 @@
 #include "windowfunction.h"
 #include <span>
 #include <utility>
+#include <iostream>
 
 namespace audiostretch {
 template<typename T>
@@ -49,7 +50,7 @@ void wsola<T>::changeFramesize(unsigned int newFramesize){
     window.changeSize(framesize);
     analysisHopsize = synthesisHopsize / stretchFactor;
     synthesisFrame.resize(framesize);
-    analysisframeSearchRadius = 0.25 * framesize;
+    analysisframeSearchRadius = 0.1 * framesize;
 }
 template<typename T>
 float wsola<T>::crossCorrelate(std::span<T> previousFrame, std::span<T> nextFrame){
@@ -92,7 +93,6 @@ void wsola<T>::fillFrame(std::span<T> input){
     }
 }
 
-//currently crashing somewhere in there
 template<typename T>
 unsigned int wsola<T>::findNextFrame(std::span<T> input){
     unsigned int maxIndex{0};
@@ -100,7 +100,7 @@ unsigned int wsola<T>::findNextFrame(std::span<T> input){
     std::span<T> potentialFrame;
     unsigned int startOffset = previousFrameOffset + analysisHopsize - analysisframeSearchRadius;
     auto  previousFrame = std::span<T>(input).subspan(previousFrameOffset, framesize);
-
+    maxIndex = startOffset;
     for(unsigned int i = startOffset; i < startOffset + analysisframeSearchRadius * 2; i ++ ){
         if(i + framesize < input.size()){
             potentialFrame = std::span<T>(input.begin() + i, input.begin() + i + framesize);
@@ -117,6 +117,8 @@ unsigned int wsola<T>::findNextFrame(std::span<T> input){
             maxIndex = i;
         }
     }
+    if(maxIndex - previousFrameOffset > 1000)
+    {std::cout << "WTF!" << std::endl;}
     return maxIndex;
 }
 
@@ -126,12 +128,11 @@ void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
     unsigned int synthesisframeCounter{1};
     //we make frames until we left the input vector. we also use std::span now
     previousFrameOffset = 0;
-    unsigned int counter{1};
     //copy the first frame
     fillFrame(std::span<T>(input).subspan(0, framesize));
     window.applyWindow(synthesisFrame);
-    addToOutput(synthesisFrame, output, 0);
-    while(previousFrameOffset + (analysisHopsize - analysisframeSearchRadius) < input.size()){
+    addToOutput(synthesisFrame, output, previousFrameOffset);
+    while(previousFrameOffset + (analysisHopsize + analysisframeSearchRadius + framesize) < input.size()){
         unsigned int nextFrame = findNextFrame(input);
         fillFrame(std::span<T>(input).subspan(nextFrame, framesize));
         window.applyWindow(synthesisFrame);

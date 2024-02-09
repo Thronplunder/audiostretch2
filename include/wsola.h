@@ -73,6 +73,7 @@ void wsola<T>::addToOutput(std::vector<T>& src, std::vector<T>& dest, unsigned i
         if(offset + counter < dest.size()){
         dest.at(offset + counter) += sample;
         }
+        counter++;
     }
 }
 template< typename T>
@@ -96,7 +97,7 @@ void wsola<T>::fillFrame(std::span<T> input){
 template<typename T>
 unsigned int wsola<T>::findNextFrame(std::span<T> input){
     unsigned int maxIndex{0};
-    float result{0.f}, maxValue{0};
+    float result{0.f}, maxValue{std::numeric_limits<float>::lowest()};
     std::span<T> potentialFrame;
     unsigned int startOffset = previousFrameOffset + analysisHopsize - analysisframeSearchRadius;
     auto  previousFrame = std::span<T>(input).subspan(previousFrameOffset, framesize);
@@ -117,8 +118,6 @@ unsigned int wsola<T>::findNextFrame(std::span<T> input){
             maxIndex = i;
         }
     }
-    if(maxIndex - previousFrameOffset > 1000)
-    {std::cout << "WTF!" << std::endl;}
     return maxIndex;
 }
 

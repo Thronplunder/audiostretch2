@@ -25,7 +25,7 @@ class wsola{
     float crossCorrelate(std::span<T> previousFrame, std::span<T> nextFrame);
     void fillFrame(std::span<T> input);
     void addToOutput(std::vector<T>& src, std::vector<T>& dest, unsigned int offset);
-    unsigned int findNextFrame(std::span<T> input);
+    unsigned int findNextFrame(std::span<T> inputSlice, std::span<T> outputSlice);
 };
 
 template<typename T>
@@ -95,24 +95,17 @@ void wsola<T>::fillFrame(std::span<T> input){
 }
 
 template<typename T>
-unsigned int wsola<T>::findNextFrame(std::span<T> input){
+unsigned int wsola<T>::findNextFrame(std::span<T> inputSlice, std::span<T> outputSlice){
     unsigned int maxIndex{0};
     float result{0.f}, maxValue{std::numeric_limits<float>::lowest()};
     std::span<T> potentialFrame;
-    unsigned int startOffset = previousFrameOffset + analysisHopsize - analysisframeSearchRadius;
-    auto  previousFrame = std::span<T>(input).subspan(previousFrameOffset, framesize);
-    maxIndex = startOffset;
-    for(unsigned int i = startOffset; i < startOffset + analysisframeSearchRadius * 2; i ++ ){
-        if(i + framesize < input.size()){
-            potentialFrame = std::span<T>(input.begin() + i, input.begin() + i + framesize);
-        }
-        else if(input.begin() + i != input.end()) {
-            potentialFrame = std::span<T>(input.begin() + i, input.end());
-        }
-        else {
-            return i;
-        }
-        result = crossCorrelate(previousFrame, potentialFrame);
+    maxIndex = 0;
+
+    for(unsigned int i = 0; i < inputSlice.size() - framesize; i++ ){
+        
+        potentialFrame = std::span<T>(inputSlice.begin() + i, inputSlice.begin() + i + framesize);
+        
+        result = crossCorrelate(outputSlice, potentialFrame);
         if(result > maxValue){
             maxValue = result;
             maxIndex = i;
@@ -131,13 +124,23 @@ void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
     fillFrame(std::span<T>(input).subspan(0, framesize));
     window.applyWindow(synthesisFrame);
     addToOutput(synthesisFrame, output, previousFrameOffset);
-    while(previousFrameOffset + (analysisHopsize + analysisframeSearchRadius + framesize) < input.size()){
-        unsigned int nextFrame = findNextFrame(input);
-        fillFrame(std::span<T>(input).subspan(nextFrame, framesize));
+
+    unsigned int numFrames = input.size() / analysisHopsize;
+    for(unsigned int i = 1; i < numFrames; i++){
+        auto startSearch = input.begin() + (i * analysisHopsize) - analysisframeSearchRadius;
+        auto endSearch = input.begin() + (i * analysisHopsize) + framesize + analysisframeSearchRadius;
+
+        if(i * analysisHopsize + framesize + analysisframeSearchRadius > input.size()){
+            endSearch = input.end();
+            }
+
+        auto outputSliceStart = output.begin() + (i * synthesisHopsize);
+        auto outputSliceEnd = outputSliceStart + framesize;
+        unsigned int nextFrame = findNextFrame(std::span<T>(startSearch, endSearch), std::span<T>(outputSliceStart, outputSliceEnd));
+        //fillFrame(std::span<T>(input).subspan(nextFrame, framesize));
+        fillFrame(std::span<T>(input).subspan(i * analysisHopsize + nextFrame - analysisframeSearchRadius, framesize));
         window.applyWindow(synthesisFrame);
-        addToOutput(synthesisFrame, output, synthesisframeCounter * synthesisHopsize);
-        synthesisframeCounter++;    
-        previousFrameOffset = nextFrame;
+        addToOutput(synthesisFrame, output, i * synthesisHopsize);
     }
 }
 }

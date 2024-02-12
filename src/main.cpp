@@ -106,7 +106,7 @@ int main(int argc, char** argv)
     }
 
     //we try to stretch
-    /*
+    
     for (int i = 0; i < inputInfo.channels; i++){
         timeStretcher.process(inputAudiochannels.at(i), outputAudiochannels.at(i));
     }
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
     sf_write_float(audiofile, tempAudio.data(), tempAudio.size());
     sf_close(audiofile);
     PLOGD << std::format("Outputting into {}", outputfile.string());
-    */
+    
     for(auto &ch : outputAudiochannels){
         for(auto &sample : ch){
             sample = 0;

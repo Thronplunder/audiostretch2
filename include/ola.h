@@ -13,6 +13,9 @@ class ola{
     void process(std::vector<T> &input, std::vector<T> &output);
     void changeStretchfactor(float newFactor);
     void changeFramesize(unsigned int newFramesize);
+    unsigned int getAnalysisHopsize();
+    unsigned int getSynthesisHopsize();
+
 
     private:
     int analysisFramesize, analysisHopsize, synthesisHopsize;
@@ -30,6 +33,17 @@ class ola{
         synthesisFrame.resize(analysisFramesize);
     }
 
+    template <typename T>
+    unsigned int ola<T>::getAnalysisHopsize(){
+    return analysisHopsize;
+}
+
+template <typename T>
+    unsigned int ola<T>::getSynthesisHopsize(){
+    return synthesisHopsize;
+}
+
+
     template<typename T>
     void ola<T>::process(std::vector<T> &input, std::vector<T> &output){
         //null out output and resize it if necessary
@@ -41,6 +55,7 @@ class ola{
         }
         //run loop for every analysis frame
         unsigned int numFrames = input.size() / analysisHopsize; 
+        unsigned int numFramesOut = output.size() / synthesisHopsize;
         for(size_t i = 0; i < numFrames; i++){
             //fill one frame
             size_t analysisOffset = i * analysisHopsize;

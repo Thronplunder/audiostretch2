@@ -99,10 +99,11 @@ int main(int argc, char** argv)
     };
     tempAudio.clear();
 
+    unsigned int outputLength = audiostretch::calcOutputLength(inputInfo.frames, timeStretcher.getAnalysisHopsize(), timeStretcher.getSynthesisHopsize());
     //prepare output buffers
     outputAudiochannels.resize(inputAudiochannels.size());
     for(auto &ch : outputAudiochannels){
-        ch.resize(inputInfo.frames * stretchingFactor);
+        ch.resize(outputLength);
     }
 
     //we try to stretch

@@ -39,4 +39,10 @@ int interleaveAudio(std::vector<std::vector<T>> &input, std::vector<T> &output){
     }
     return 0;
 }
+
+unsigned int calcOutputLength(unsigned int inputLength, unsigned int analysisHopsize, unsigned int synthesisHopsize){
+    unsigned int numFrames = inputLength / analysisHopsize;
+
+    return 2* synthesisHopsize + synthesisHopsize * (numFrames - 1);
+}
 }

@@ -16,6 +16,8 @@ class wsola{
     void process(std::vector<T> &input, std::vector<T> &output);
     void changeStretchfactor(float newFactor);
     void changeFramesize(unsigned int newFramesize);
+    unsigned int getAnalysisHopsize();
+    unsigned int getSynthesisHopsize();
 
     private:
     unsigned int framesize, analysisHopsize, synthesisHopsize, analysisframeSearchRadius, previousFrameOffset;
@@ -41,6 +43,16 @@ template <typename T>
 void wsola<T>::changeStretchfactor(float newFactor){
     stretchFactor = newFactor;
     analysisHopsize = synthesisHopsize / stretchFactor;
+}
+
+template <typename T>
+unsigned int wsola<T>::getAnalysisHopsize(){
+    return analysisHopsize;
+}
+
+template <typename T>
+unsigned int wsola<T>::getSynthesisHopsize(){
+    return synthesisHopsize;
 }
 
 template<typename T>
@@ -117,15 +129,14 @@ unsigned int wsola<T>::findNextFrame(std::span<T> inputSlice, std::span<T> outpu
 template<typename T>
 void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
     //we are no longer testing for correct vector sizes
-    unsigned int synthesisframeCounter{1};
-    //we make frames until we left the input vector. we also use std::span now
-    previousFrameOffset = 0;
+
     //copy the first frame
     fillFrame(std::span<T>(input).subspan(0, framesize));
     window.applyWindow(synthesisFrame);
-    addToOutput(synthesisFrame, output, previousFrameOffset);
+    addToOutput(synthesisFrame, output, 0);
 
     unsigned int numFrames = input.size() / analysisHopsize;
+    unsigned int numFramesOutput = output.size() / synthesisHopsize;
     for(unsigned int i = 1; i < numFrames; i++){
         auto startSearch = input.begin() + (i * analysisHopsize) - analysisframeSearchRadius;
         auto endSearch = input.begin() + (i * analysisHopsize) + framesize + analysisframeSearchRadius;
@@ -133,14 +144,13 @@ void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
         if(i * analysisHopsize + framesize + analysisframeSearchRadius > input.size()){
             endSearch = input.end();
             }
-
-        auto outputSliceStart = output.begin() + (i * synthesisHopsize);
-        auto outputSliceEnd = outputSliceStart + framesize;
-        if(output.size() - (i * synthesisHopsize) < framesize  ){
+        unsigned int outputOffset = (i - 1) * synthesisHopsize;
+        auto outputSliceStart = output.begin() + outputOffset;
+        auto outputSliceEnd = output.begin() + outputOffset + framesize;
+        if(output.size() - outputOffset < framesize  ){
             return;
         }
         unsigned int nextFrame = findNextFrame(std::span<T>(startSearch, endSearch), std::span<T>(outputSliceStart, outputSliceEnd));
-        //fillFrame(std::span<T>(input).subspan(nextFrame, framesize));
         fillFrame(std::span<T>(input).subspan(i * analysisHopsize + nextFrame - analysisframeSearchRadius, framesize));
         window.applyWindow(synthesisFrame);
         addToOutput(synthesisFrame, output, i * synthesisHopsize);

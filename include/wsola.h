@@ -151,6 +151,7 @@ void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
             return;
         }
         unsigned int nextFrame = findNextFrame(std::span<T>(startSearch, endSearch), std::span<T>(outputSliceStart, outputSliceEnd));
+        std::cout << nextFrame << " ";
         fillFrame(std::span<T>(input).subspan(i * analysisHopsize + nextFrame - analysisframeSearchRadius, framesize));
         window.applyWindow(synthesisFrame);
         addToOutput(synthesisFrame, output, i * synthesisHopsize);

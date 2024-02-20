@@ -24,8 +24,8 @@ int main(int argc, char** argv)
     std::vector<std::vector<float>> inputAudiochannels, outputAudiochannels;
     std::vector<float> tempAudio;
     unsigned int totalSamples;
-    audiostretch::ola<float> timeStretcher{512, 1.1};
-    audiostretch::wsola<float> wsolastretcher{512, 1.1};
+    audiostretch::ola timeStretcher{512, 1.1};
+    audiostretch::wsola wsolastretcher{512, 1.1};
 
 
     plog::init(plog::debug, "testing/log.txt");

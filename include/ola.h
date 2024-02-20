@@ -6,11 +6,10 @@
 #include "windowfunction.h"
 
 namespace audiostretch {
-template<typename T>
 class ola{
     public:
     ola(int frameSize, float stretchFactor);
-    void process(std::vector<T> &input, std::vector<T> &output);
+    void process(std::vector<float> &input, std::vector<float> &output);
     void changeStretchfactor(float newFactor);
     void changeFramesize(unsigned int newFramesize);
     unsigned int getAnalysisHopsize();
@@ -20,32 +19,28 @@ class ola{
     private:
     int analysisFramesize, analysisHopsize, synthesisHopsize;
     float stretchFactor;
-    std::vector<T> synthesisFrame;
-    windowFunction<T> window;
+    std::vector<float> synthesisFrame;
+    windowFunction<float> window;
     
 };
 
-    template<typename T>
-    ola<T>::ola(int frameSize, float stretchFactor) : stretchFactor(stretchFactor), analysisFramesize(frameSize),
+    ola::ola(int frameSize, float stretchFactor) : stretchFactor(stretchFactor), analysisFramesize(frameSize),
                                                       synthesisHopsize(float(frameSize) / 2.f),
                                                       window(frameSize, windowType::Hann){
         analysisHopsize = synthesisHopsize / stretchFactor;
         synthesisFrame.resize(analysisFramesize);
     }
 
-    template <typename T>
-    unsigned int ola<T>::getAnalysisHopsize(){
+
+    unsigned int ola::getAnalysisHopsize(){
     return analysisHopsize;
-}
+    }
 
-template <typename T>
-    unsigned int ola<T>::getSynthesisHopsize(){
+    unsigned int ola::getSynthesisHopsize(){
     return synthesisHopsize;
-}
+    }
 
-
-    template<typename T>
-    void ola<T>::process(std::vector<T> &input, std::vector<T> &output){
+    void ola::process(std::vector<float> &input, std::vector<float> &output){
         //null out output and resize it if necessary
         if(output.size() != input.size() * stretchFactor){
         output.resize(input.size() * stretchFactor);
@@ -80,15 +75,11 @@ template <typename T>
             }
         }
     }
-
-    template<typename T>
-    void ola<T>::changeStretchfactor(float newFactor){
+    void ola::changeStretchfactor(float newFactor){
         stretchFactor = newFactor;
         analysisHopsize = synthesisHopsize / stretchFactor;
     }
-
-    template<typename T>
-    void ola<T>::changeFramesize(unsigned int newFramesize){
+    void ola::changeFramesize(unsigned int newFramesize){
         analysisFramesize = newFramesize;
         synthesisHopsize = analysisFramesize / 2.f;
         window.changeSize(analysisFramesize);

@@ -9,11 +9,10 @@
 #include <iostream>
 
 namespace audiostretch {
-template<typename T>
 class wsola{
     public:
     wsola(int framelength, float stretchFactor);
-    void process(std::vector<T> &input, std::vector<T> &output);
+    void process(std::vector<float> &input, std::vector<float> &output);
     void changeStretchfactor(float newFactor);
     void changeFramesize(unsigned int newFramesize);
     unsigned int getAnalysisHopsize();
@@ -22,50 +21,46 @@ class wsola{
     private:
     unsigned int framesize, analysisHopsize, synthesisHopsize, analysisframeSearchRadius, previousFrameOffset;
     float stretchFactor;
-    std::vector<T> synthesisFrame;
-    windowFunction<T> window;
-    float crossCorrelate(std::span<T> previousFrame, std::span<T> nextFrame);
-    void fillFrame(std::span<T> input);
-    void addToOutput(std::vector<T>& src, std::vector<T>& dest, unsigned int offset);
-    unsigned int findNextFrame(std::span<T> inputSlice, std::span<T> outputSlice);
+    std::vector<float> synthesisFrame;
+    windowFunction<float> window;
+    float crossCorrelate(std::span<float> previousFrame, std::span<float> nextFrame);
+    void fillFrame(std::span<float> input);
+    void addToOutput(std::vector<float>& src, std::vector<float>& dest, unsigned int offset);
+    unsigned int findNextFrame(std::span<float> inputSlice, std::span<float> outputSlice);
 };
 
-template<typename T>
-wsola<T>::wsola(int framelength, float stretchFactor) : stretchFactor(stretchFactor), framesize(framelength),
+wsola::wsola(int framelength, float stretchFactor) : stretchFactor(stretchFactor), framesize(framelength),
                                                    synthesisHopsize(float(framesize) / 2.f),
                                                    window(framesize, windowType::Hann){
     analysisHopsize = synthesisHopsize / stretchFactor;
     synthesisFrame.resize(framesize);
-    analysisframeSearchRadius = 50; 
+    analysisframeSearchRadius = framesize / 4; 
     }
 
-template <typename T>
-void wsola<T>::changeStretchfactor(float newFactor){
+void wsola::changeStretchfactor(float newFactor){
     stretchFactor = newFactor;
     analysisHopsize = synthesisHopsize / stretchFactor;
 }
 
-template <typename T>
-unsigned int wsola<T>::getAnalysisHopsize(){
+unsigned int wsola::getAnalysisHopsize(){
     return analysisHopsize;
 }
 
-template <typename T>
-unsigned int wsola<T>::getSynthesisHopsize(){
+unsigned int wsola::getSynthesisHopsize(){
     return synthesisHopsize;
 }
 
-template<typename T>
-void wsola<T>::changeFramesize(unsigned int newFramesize){
+void wsola::changeFramesize(unsigned int newFramesize){
     framesize = newFramesize;
     synthesisHopsize = framesize / 2;
     window.changeSize(framesize);
     analysisHopsize = synthesisHopsize / stretchFactor;
     synthesisFrame.resize(framesize);
-    analysisframeSearchRadius = 0.1 * framesize;
+    analysisframeSearchRadius = 0.25 * framesize;
 }
-template<typename T>
-float wsola<T>::crossCorrelate(std::span<T> previousFrame, std::span<T> nextFrame){
+
+
+float wsola::crossCorrelate(std::span<float> previousFrame, std::span<float> nextFrame){
     float sum{0};
     for(int i = 0; i < previousFrame.size(); i++){
         if(i < nextFrame.size()){
@@ -78,8 +73,7 @@ float wsola<T>::crossCorrelate(std::span<T> previousFrame, std::span<T> nextFram
     return sum;
 }
 
-template <typename T>
-void wsola<T>::addToOutput(std::vector<T>& src, std::vector<T>& dest, unsigned int offset){
+void wsola::addToOutput(std::vector<float>& src, std::vector<float>& dest, unsigned int offset){
     int counter{0};
     for(auto &sample : src){
         if(offset + counter < dest.size()){
@@ -88,8 +82,7 @@ void wsola<T>::addToOutput(std::vector<T>& src, std::vector<T>& dest, unsigned i
         counter++;
     }
 }
-template< typename T>
-void wsola<T>::fillFrame(std::span<T> input){
+void wsola::fillFrame(std::span<float> input){
     int counter{0};
     if(input.size() == synthesisFrame.size()){
         synthesisFrame.assign(input.begin(), input.end());
@@ -106,16 +99,15 @@ void wsola<T>::fillFrame(std::span<T> input){
     }
 }
 
-template<typename T>
-unsigned int wsola<T>::findNextFrame(std::span<T> inputSlice, std::span<T> outputSlice){
+unsigned int wsola::findNextFrame(std::span<float> inputSlice, std::span<float> outputSlice){
     unsigned int maxIndex{0};
     float result{0.f}, maxValue{std::numeric_limits<float>::lowest()};
-    std::span<T> potentialFrame;
+    std::span<float> potentialFrame;
     maxIndex = 0;
 
     for(unsigned int i = 0; i < inputSlice.size() - framesize; i++ ){
         
-        potentialFrame = std::span<T>(inputSlice.begin() + i, inputSlice.begin() + i + framesize);
+        potentialFrame = std::span<float>(inputSlice.begin() + i, inputSlice.begin() + i + framesize);
         
         result = crossCorrelate(outputSlice, potentialFrame);
         if(result > maxValue){
@@ -126,17 +118,15 @@ unsigned int wsola<T>::findNextFrame(std::span<T> inputSlice, std::span<T> outpu
     return maxIndex;
 }
 
-template<typename T>
-void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
+void wsola::process(std::vector<float> &input, std::vector<float> &output){
     //we are no longer testing for correct vector sizes
 
     //copy the first frame
-    fillFrame(std::span<T>(input).subspan(0, framesize));
+    fillFrame(std::span<float>(input).subspan(0, framesize));
     window.applyWindow(synthesisFrame);
     addToOutput(synthesisFrame, output, 0);
 
     unsigned int numFrames = input.size() / analysisHopsize;
-    unsigned int numFramesOutput = output.size() / synthesisHopsize;
     for(unsigned int i = 1; i < numFrames; i++){
         auto startSearch = input.begin() + (i * analysisHopsize) - analysisframeSearchRadius;
         auto endSearch = input.begin() + (i * analysisHopsize) + framesize + analysisframeSearchRadius;
@@ -145,14 +135,20 @@ void wsola<T>::process(std::vector<T> &input, std::vector<T> &output){
             endSearch = input.end();
             }
         unsigned int outputOffset = (i - 1) * synthesisHopsize;
-        auto outputSliceStart = output.begin() + outputOffset;
-        auto outputSliceEnd = output.begin() + outputOffset + framesize;
+
+        //a slice to compare against at last frame + n/2 or synthesishopsize, since this is the future position
+        auto compareSliceStart = input.begin() + (i - 1) * analysisHopsize + synthesisHopsize;
+        auto compareSliceEnd =input.begin() + (i - 1) * analysisHopsize + synthesisHopsize + framesize;
         if(output.size() - outputOffset < framesize  ){
             return;
         }
-        unsigned int nextFrame = findNextFrame(std::span<T>(startSearch, endSearch), std::span<T>(outputSliceStart, outputSliceEnd));
+        unsigned int nextFrame = findNextFrame(std::span<float>(startSearch, endSearch), std::span<float>(compareSliceStart, compareSliceEnd));
+
+        //output the next frame for debugging
         std::cout << nextFrame << " ";
-        fillFrame(std::span<T>(input).subspan(i * analysisHopsize + nextFrame - analysisframeSearchRadius, framesize));
+        std::cout.flush();
+
+        fillFrame(std::span<float>(input).subspan(i * analysisHopsize + nextFrame - analysisframeSearchRadius, framesize));
         window.applyWindow(synthesisFrame);
         addToOutput(synthesisFrame, output, i * synthesisHopsize);
     }

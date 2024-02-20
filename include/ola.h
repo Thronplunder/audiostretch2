@@ -50,7 +50,6 @@ class ola{
         }
         //run loop for every analysis frame
         unsigned int numFrames = input.size() / analysisHopsize; 
-        unsigned int numFramesOut = output.size() / synthesisHopsize;
         for(size_t i = 0; i < numFrames; i++){
             //fill one frame
             size_t analysisOffset = i * analysisHopsize;

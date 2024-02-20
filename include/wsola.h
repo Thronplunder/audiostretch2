@@ -105,8 +105,9 @@ unsigned int wsola::findNextFrame(std::span<float> inputSlice, std::span<float> 
     std::span<float> potentialFrame;
     maxIndex = 0;
 
-    for(unsigned int i = 0; i < inputSlice.size() - framesize; i++ ){
+    for(unsigned int i = 0; i + framesize < inputSlice.size(); i++ ){
         
+        //end early if no frame fits into the slice anymore, probably not needed
         potentialFrame = std::span<float>(inputSlice.begin() + i, inputSlice.begin() + i + framesize);
         
         result = crossCorrelate(outputSlice, potentialFrame);
@@ -139,14 +140,18 @@ void wsola::process(std::vector<float> &input, std::vector<float> &output){
         //a slice to compare against at last frame + n/2 or synthesishopsize, since this is the future position
         auto compareSliceStart = input.begin() + (i - 1) * analysisHopsize + synthesisHopsize;
         auto compareSliceEnd =input.begin() + (i - 1) * analysisHopsize + synthesisHopsize + framesize;
+
+        if((i - 1) * analysisHopsize + synthesisHopsize + framesize > input.size()){
+            compareSliceEnd = input.end();
+        }
         if(output.size() - outputOffset < framesize  ){
             return;
         }
         unsigned int nextFrame = findNextFrame(std::span<float>(startSearch, endSearch), std::span<float>(compareSliceStart, compareSliceEnd));
 
         //output the next frame for debugging
-        std::cout << nextFrame << " ";
-        std::cout.flush();
+        //std::cout << nextFrame << " ";
+        //std::cout.flush();
 
         fillFrame(std::span<float>(input).subspan(i * analysisHopsize + nextFrame - analysisframeSearchRadius, framesize));
         window.applyWindow(synthesisFrame);

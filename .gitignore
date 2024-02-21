@@ -9,3 +9,10 @@ build/
 testing/
 .vs/
 .vscode
+
+#clangd
+.cache
+
+#compile commands
+include/compile_commands.json
+src/compile_commands.json

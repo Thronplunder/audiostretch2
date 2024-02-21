@@ -1,88 +1,42 @@
-// all algorithms are based on this paper bei meinard müller and jonathan driedger
-// https://www.mdpi.com/2076-3417/6/2/57
-//processes one audio channel
-
-#include<vector>
+// all algorithms are based on this paper bei meinard müller and jonathan
+// driedger https://www.mdpi.com/2076-3417/6/2/57
+// processes one audio channel
+#pragma once
 #include "windowfunction.h"
+#include <vector>
+#include "basestretch.h"
+
 
 namespace audiostretch {
-class ola{
-    public:
-    ola(int frameSize, float stretchFactor);
-    void process(std::vector<float> &input, std::vector<float> &output);
-    void changeStretchfactor(float newFactor);
-    void changeFramesize(unsigned int newFramesize);
-    unsigned int getAnalysisHopsize();
-    unsigned int getSynthesisHopsize();
-
-
-    private:
-    int analysisFramesize, analysisHopsize, synthesisHopsize;
-    float stretchFactor;
-    std::vector<float> synthesisFrame;
-    windowFunction<float> window;
-    
+class ola : public basestretch{
+public:
+  ola(int frameSize, float stretchFac);
+  //ola();
+  void process(std::vector<float> &input, std::vector<float> &output) override;
 };
 
-    ola::ola(int frameSize, float stretchFactor) : stretchFactor(stretchFactor), analysisFramesize(frameSize),
-                                                      synthesisHopsize(float(frameSize) / 2.f),
-                                                      window(frameSize, windowType::Hann){
-        analysisHopsize = synthesisHopsize / stretchFactor;
-        synthesisFrame.resize(analysisFramesize);
-    }
 
-
-    unsigned int ola::getAnalysisHopsize(){
-    return analysisHopsize;
-    }
-
-    unsigned int ola::getSynthesisHopsize(){
-    return synthesisHopsize;
-    }
-
-    void ola::process(std::vector<float> &input, std::vector<float> &output){
-        //null out output and resize it if necessary
-        if(output.size() != input.size() * stretchFactor){
-        output.resize(input.size() * stretchFactor);
-        }
-        for(auto &it : output){
-            it = 0;
-        }
-        //run loop for every analysis frame
-        unsigned int numFrames = input.size() / analysisHopsize; 
-        for(size_t i = 0; i < numFrames; i++){
-            //fill one frame
-            size_t analysisOffset = i * analysisHopsize;
-            for(int j = 0; j < analysisFramesize; j++){
-                //get audio from input, if out of range set to 0 instead 
-                if(analysisOffset + j < input.size()){
-                    synthesisFrame.at(j) = input.at(analysisOffset + j);
-                }
-                else {
-                    synthesisFrame.at(j) = 0;
-                }  
-            }
-            //apply window
-            window.applyWindow(synthesisFrame);
-            
-            //write synthesis frame to output
-            size_t synthesisOffset = i * synthesisHopsize;
-            for(int j = 0 ; j < analysisFramesize; j++){
-                if(synthesisOffset+ j < output.size()){
-                output.at(synthesisOffset + j) += synthesisFrame.at(j);
-                }
-            }
-        }
-    }
-    void ola::changeStretchfactor(float newFactor){
-        stretchFactor = newFactor;
-        analysisHopsize = synthesisHopsize / stretchFactor;
-    }
-    void ola::changeFramesize(unsigned int newFramesize){
-        analysisFramesize = newFramesize;
-        synthesisHopsize = analysisFramesize / 2.f;
-        window.changeSize(analysisFramesize);
-        analysisHopsize = synthesisHopsize /stretchFactor;
-        synthesisFrame.resize(analysisFramesize);
-    }
+ola::ola(int frameLength, float stretchFac) : basestretch(frameLength, stretchFac) {
 }
+
+void ola::process(std::vector<float> &input, std::vector<float> &output) {
+  // null out output and resize it if necessary
+  for (auto &it : output) {
+    it = 0;
+  }
+  // run loop for every analysis frame
+  unsigned int numFrames = input.size() / analysisHopsize;
+  for (size_t i = 0; i < numFrames; i++) {
+    // fill one frame
+    size_t analysisOffset = i * analysisHopsize;
+    fillFrame(std::span<float>(input.begin() + analysisOffset , framesize));
+    // apply window
+    window.applyWindow(synthesisFrame);
+
+    // write synthesis frame to output
+    size_t synthesisOffset = i * synthesisHopsize;
+    addToOutput(synthesisFrame, output, synthesisOffset);
+  }
+}
+
+} // namespace audiostretch

@@ -2,8 +2,9 @@
 // driedger https://www.mdpi.com/2076-3417/6/2/57
 // processes one audio channel
 #pragma once
-#include "windowfunction.h"
 #include <vector>
+#include <span>
+#include <utility>
 #include "basestretch.h"
 
 

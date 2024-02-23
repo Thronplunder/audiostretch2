@@ -3,7 +3,6 @@
 // processes one audio channel
 
 #include "basestretch.h"
-#include "windowfunction.h"
 #include <iostream>
 #include <span>
 #include <utility>
@@ -75,7 +74,6 @@ unsigned int wsola::findNextFrame(std::span<float> inputSlice,
 }
 
 void wsola::process(std::vector<float> &input, std::vector<float> &output) {
-  // we are no longer testing for correct vector sizes
 
   // copy the first frame
   fillFrame(std::span<float>(input).subspan(0, framesize));

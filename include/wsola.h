@@ -14,16 +14,13 @@ namespace audiostretch {
 class wsola : public basestretch {
 public:
   wsola(int framelength, float stretchFactor);
-  void process(std::vector<float> &input, std::vector<float> &output);
-  void changeFramesize(unsigned int newFramesize);
+  void process(std::vector<float> &input, std::vector<float> &output) override;
+  void changeFramesize(unsigned int newFramesize) override;
 
 private:
   unsigned int analysisframeSearchRadius, previousFrameOffset;
   float crossCorrelate(std::span<float> previousFrame,
                        std::span<float> nextFrame);
-  void fillFrame(std::span<float> input);
-  void addToOutput(std::vector<float> &src, std::vector<float> &dest,
-                   unsigned int offset);
   unsigned int findNextFrame(std::span<float> inputSlice,
                              std::span<float> outputSlice);
 };

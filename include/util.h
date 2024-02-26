@@ -42,10 +42,12 @@ int interleaveAudio(std::vector<std::vector<T>> &input,
 }
 
 unsigned int calcOutputLength(unsigned int inputLength,
+                              unsigned int numChannels,
                               unsigned int analysisHopsize,
-                              unsigned int synthesisHopsize) {
+                              unsigned int synthesisHopsize
+                              ) {
   unsigned int numFrames = inputLength / analysisHopsize;
 
-  return 2 * synthesisHopsize + synthesisHopsize * (numFrames - 1);
+  return numChannels * synthesisHopsize + synthesisHopsize * (numFrames - 1);
 }
 } // namespace audiostretch

@@ -2,6 +2,7 @@
 #include "plog/Initializers/RollingFileInitializer.h"
 #include "util.h"
 #include "wsola.h"
+#include "pvtsm.h"
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <format>
@@ -24,6 +25,7 @@ int main(int argc, char **argv) {
   unsigned int totalSamples;
   audiostretch::ola timeStretcher{512, 1.1};
   audiostretch::wsola wsolastretcher{512, 1.1};
+  audiostretch::pvtsm pvstretcher(512, 1, 44100);
 
   plog::init(plog::debug, "testing/log.txt");
 
@@ -59,6 +61,8 @@ int main(int argc, char **argv) {
   timeStretcher.changeFramesize(framesize);
   wsolastretcher.changeStretchfactor(stretchingFactor);
   wsolastretcher.changeFramesize(framesize);
+  pvstretcher.changeStretchfactor(stretchingFactor);
+  pvstretcher.changeFramesize(framesize);
 
   if (!std::filesystem::is_regular_file(inputfile) ||
       !std::filesystem::exists(inputfile)) {
@@ -112,7 +116,7 @@ int main(int argc, char **argv) {
   tempAudio.clear();
 
   unsigned int outputLength = audiostretch::calcOutputLength(
-      inputInfo.frames, timeStretcher.getAnalysisHopsize(),
+      inputInfo.frames, inputInfo.channels,  timeStretcher.getAnalysisHopsize(),
       timeStretcher.getSynthesisHopsize());
   // prepare output buffers
   outputAudiochannels.resize(inputAudiochannels.size());
@@ -156,6 +160,31 @@ int main(int argc, char **argv) {
   audiostretch::interleaveAudio(outputAudiochannels, tempAudio);
   // write the output file
   outputfile = outputfolder / inputfile.stem().concat("_wsola");
+  outputfile += inputfile.extension();
+  outputinfo.format = inputInfo.format;
+  outputinfo.channels = inputInfo.channels;
+  outputinfo.samplerate = inputInfo.samplerate;
+  audiofile = sf_open(outputfile.string().c_str(), SFM_WRITE, &outputinfo);
+  sf_write_float(audiofile, tempAudio.data(), tempAudio.size());
+  sf_close(audiofile);
+  PLOGD << std::format("Outputting into {}", outputfile.string());
+
+  //the same thing but with pvtsm
+  for (auto &ch : outputAudiochannels) {
+    for (auto &sample : ch) {
+      sample = 0;
+    }
+  }
+
+  for (int i = 0; i < inputInfo.channels; i++) {
+    pvstretcher.process(inputAudiochannels.at(i), outputAudiochannels.at(i));
+  }
+
+  tempAudio.resize(outputAudiochannels.size() *
+                   outputAudiochannels.at(0).size());
+  audiostretch::interleaveAudio(outputAudiochannels, tempAudio);
+  // write the output file
+  outputfile = outputfolder / inputfile.stem().concat("_pvtsm");
   outputfile += inputfile.extension();
   outputinfo.format = inputInfo.format;
   outputinfo.channels = inputInfo.channels;

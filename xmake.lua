@@ -9,7 +9,7 @@ set_languages("c++23")
 target("audiostretch2")
     set_kind("binary")
     add_files("src/*.cpp")
-    add_packages("libsndfile", "argparse", "plog, pocketfft")
+    add_packages("libsndfile", "argparse", "plog", "pocketfft")
 
 
 --

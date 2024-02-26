@@ -9,17 +9,17 @@
 namespace audiostretch {
 class basestretch {
 protected:
-  basestretch() = delete;
+  basestretch();
   basestretch(unsigned int frameLength, float stretchFac);
 
 public:
   unsigned int framesize, analysisHopsize, synthesisHopsize;
-  virtual void process(std::vector<float> &input, std::vector<float> &output);
+  virtual void process(std::vector<float> &input, std::vector<float> &output) = 0;
   float stretchFactor;
   std::vector<float> synthesisFrame;
   windowFunction<float> window;
   void changeStretchfactor(float newFactor);
-  void changeFramesize(unsigned int newFramesize);
+  virtual void changeFramesize(unsigned int newFramesize);
   unsigned int getAnalysisHopsize();
   unsigned int getSynthesisHopsize();
 

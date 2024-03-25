@@ -30,7 +30,14 @@ void ola::process(std::vector<float> &input, std::vector<float> &output) {
   for (size_t i = 0; i < numFrames; i++) {
     // fill one frame
     size_t analysisOffset = i * analysisHopsize;
-    fillFrame(std::span<float>(input.begin() + analysisOffset , framesize));
+    if (analysisOffset + framesize < input.size()) {
+      fillFrame(std::span<float>(input.begin() + analysisOffset,
+                                 input.begin() + analysisOffset + framesize));
+    } else {
+      fillFrame(std::span<float>(input.begin() + analysisOffset, input.end()));
+    }
+    
+    //fillFrame(std::span<float>(input.begin() + analysisOffset , framesize));
     // apply window
     window.applyWindow(synthesisFrame);
 

@@ -113,11 +113,13 @@ int main(int argc, char **argv) {
                                              inputInfo.channels)) {
     PLOGE << "Could not deinterleave the array";
   };
-  tempAudio.clear();
 
   unsigned int outputLength = audiostretch::calcOutputLength(
       inputInfo.frames, inputInfo.channels,  timeStretcher.getAnalysisHopsize(),
       timeStretcher.getSynthesisHopsize());
+  tempAudio.clear();
+
+  
   // prepare output buffers
   outputAudiochannels.resize(inputAudiochannels.size());
   for (auto &ch : outputAudiochannels) {
@@ -132,7 +134,7 @@ int main(int argc, char **argv) {
 
   tempAudio.resize(outputAudiochannels.size() *
                    outputAudiochannels.at(0).size());
-  audiostretch::interleaveAudio(outputAudiochannels, tempAudio);
+  audiostretch::interleaveArray(outputAudiochannels, tempAudio);
   // write the output file
   outputfile = outputfolder / inputfile.stem().concat("_ola");
   outputfile += inputfile.extension();
@@ -157,7 +159,7 @@ int main(int argc, char **argv) {
 
   tempAudio.resize(outputAudiochannels.size() *
                    outputAudiochannels.at(0).size());
-  audiostretch::interleaveAudio(outputAudiochannels, tempAudio);
+  audiostretch::interleaveArray(outputAudiochannels, tempAudio);
   // write the output file
   outputfile = outputfolder / inputfile.stem().concat("_wsola");
   outputfile += inputfile.extension();
@@ -182,7 +184,7 @@ int main(int argc, char **argv) {
 
   tempAudio.resize(outputAudiochannels.size() *
                    outputAudiochannels.at(0).size());
-  audiostretch::interleaveAudio(outputAudiochannels, tempAudio);
+  audiostretch::interleaveArray(outputAudiochannels, tempAudio);
   // write the output file
   outputfile = outputfolder / inputfile.stem().concat("_pvtsm");
   outputfile += inputfile.extension();

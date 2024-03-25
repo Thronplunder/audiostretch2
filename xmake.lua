@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-add_requires("libsndfile 1.2.2", "pocketfft", "argparse 2.9", "plog 1.1.9")
+add_requires("libsndfile 1.2.2", "pocketfft", "argparse 2.9", "plog 1.1.9", "catch2 v3.5.3")
 
 add_includedirs("include")
 
@@ -10,6 +10,12 @@ target("audiostretch2")
     set_kind("binary")
     add_files("src/*.cpp")
     add_packages("libsndfile", "argparse", "plog", "pocketfft")
+
+target("tests")
+    set_kind("binary")
+    add_files("tests/test.cpp")
+    add_packages("catch2", "pocketfft")
+
 
 
 --

@@ -15,10 +15,10 @@ public:
   pvtsm(unsigned int frameLength, float stretchFac, unsigned int sr);
   void process(std::vector<float> &input, std::vector<float> &output) override;
   void changeSamplerate(unsigned int newSamplerate);
-  void changeFramesize(unsigned int newFramesize);
+  void changeFramesize(unsigned int newFramesize) override ;
 
 private:
-  std::vector<float> lastFrame;
+  std::vector<float> lastFrame, lastPhases;
   unsigned int sampleRate;
   std::vector<std::complex<float>> fftResult, lastResult;
 };
@@ -27,6 +27,7 @@ pvtsm::pvtsm(unsigned int frameLength, float stretchFac, unsigned int sr)
     : basestretch(frameLength, stretchFac), sampleRate(sr) {
   fftResult.resize(frameLength);
   lastFrame.resize(frameLength);
+  lastPhases.resize(frameLength);
 }
 
 void pvtsm::changeSamplerate(unsigned int newSampeRate) {
@@ -37,6 +38,7 @@ void pvtsm::changeFramesize(unsigned int newFramesize) {
   basestretch::changeFramesize(newFramesize);
   fftResult.resize(newFramesize);
   lastResult.resize(newFramesize);
+  lastPhases.resize(newFramesize);
 }
 
 void pvtsm::process(std::vector<float> &input, std::vector<float> &output) {
@@ -61,6 +63,11 @@ void pvtsm::process(std::vector<float> &input, std::vector<float> &output) {
   addToOutput(synthesisFrame, output, 0);
   lastResult.assign(fftResult.begin(), fftResult.end());
   lastFrame.assign(synthesisFrame.begin(), synthesisFrame.end());
+
+  //fill phases
+  for(unsigned int i = 0; i < lastFrame.size(); i++){
+    lastFrame.at(i) = std::arg(lastResult.at(i));
+  }
 
   // now do it for all the other frames
   unsigned int numFrames = input.size() / analysisHopsize;

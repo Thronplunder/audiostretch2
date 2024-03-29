@@ -1,4 +1,6 @@
 #include <vector>
+#include <cmath>
+#include <numbers>
 namespace audiostretch {
 template <typename T>
 int deinterleaveArray(std::vector<T> &input,
@@ -50,4 +52,8 @@ unsigned int calcOutputLength(unsigned int inputLength,
 
   return numChannels * synthesisHopsize + synthesisHopsize * (numFrames - 1);
 }
+float wrap(float wrapped, float wrapper){
+  return std::fmod(wrapped, wrapper);
+}
+
 } // namespace audiostretch

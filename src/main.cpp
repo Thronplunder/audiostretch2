@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
       sample = 0;
     }
   }
-
+/*
   // the same thing but with wsola
   for (int i = 0; i < inputInfo.channels; i++) {
     wsolastretcher.process(inputAudiochannels.at(i), outputAudiochannels.at(i));
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
   sf_write_float(audiofile, tempAudio.data(), tempAudio.size());
   sf_close(audiofile);
   PLOGD << std::format("Outputting into {}", outputfile.string());
-
+*/
   //the same thing but with pvtsm
   for (auto &ch : outputAudiochannels) {
     for (auto &sample : ch) {

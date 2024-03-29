@@ -30,7 +30,7 @@ public:
 
 basestretch::basestretch(unsigned int frameLength, float stretchFac)
     : stretchFactor(stretchFac), framesize(frameLength),
-      synthesisHopsize(float(framesize) / 2.f),
+      synthesisHopsize(float(framesize) / 4.f),
       window(framesize, windowType::Hann) {
   analysisHopsize = synthesisHopsize / stretchFactor;
   synthesisFrame.resize(framesize);
@@ -45,7 +45,7 @@ void basestretch::changeStretchfactor(float newFactor) {
 }
 void basestretch::changeFramesize(unsigned int newFramesize) {
   framesize = newFramesize;
-  synthesisHopsize = framesize / 2.f;
+  synthesisHopsize = framesize / 4.f;
   window.changeSize(framesize);
   analysisHopsize = synthesisHopsize / stretchFactor;
   synthesisFrame.resize(framesize);

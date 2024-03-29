@@ -7,6 +7,7 @@
 #include <span>
 #include <utility>
 #include <vector>
+#include <iostream>
 #pragma once
 
 namespace audiostretch {
@@ -43,7 +44,7 @@ void pvtsm::changeFramesize(unsigned int newFramesize) {
 
 void pvtsm::process(std::vector<float> &input, std::vector<float> &output) {
   // fft values
-  pocketfft::shape_t shape = {1};
+  pocketfft::shape_t shape = {synthesisFrame.size()};
   pocketfft::stride_t strideIn = {sizeof(float)};
   pocketfft::stride_t strideOut = {sizeof(std::complex<float>)};
   pocketfft::shape_t axis = {0};
@@ -61,6 +62,9 @@ void pvtsm::process(std::vector<float> &input, std::vector<float> &output) {
                  synthesisFrame.data(), fct);
                  window.applyWindow(synthesisFrame);
   addToOutput(synthesisFrame, output, 0);
+  for(int i = 0; i < lastPhases.size(); i++){
+    lastPhases.at(i) = std::arg(fftResult.at(i));
+  }
   lastResult.assign(fftResult.begin(), fftResult.end());
   lastFrame.assign(synthesisFrame.begin(), synthesisFrame.end());
 
@@ -84,6 +88,19 @@ void pvtsm::process(std::vector<float> &input, std::vector<float> &output) {
                    synthesisFrame.data(), fftResult.data(), fct);
 
     // do all the pvtsm magic in here
+    for(int i =0; i < fftResult.size(); i++){
+      float currPhase = std::arg(fftResult.at(i));
+      float lastPhase = lastPhases.at(i);
+      auto  phaseDiff = lastPhases.at(i) - currPhase;
+      float omega = (2 * std::numbers::pi_v<float> * i) / framesize;
+      float  timeDelta = analysisHopsize / sampleRate;
+
+      float IF = omega;
+      std::cout << phaseDiff << " ";
+      lastPhases.at(i) = currPhase;
+    }
+
+    std::cout << std::endl << "----------------------------" << std::endl;
 
     pocketfft::c2r(ishape, strideOut, strideIn, axis, backward,
                    fftResult.data(), synthesisFrame.data(), fct);

@@ -88,13 +88,15 @@ void pvtsm::process(std::vector<float> &input, std::vector<float> &output) {
                    synthesisFrame.data(), fftResult.data(), fct);
 
     // do all the pvtsm magic in here
-    for(int i =0; i < fftResult.size(); i++){
-      float currPhase = std::arg(fftResult.at(i));
-      float lastPhase = lastPhases.at(i);
-      auto  phaseDiff = lastPhases.at(i) - currPhase;
-      float omega = (2 * std::numbers::pi_v<float> * i) / framesize;
+    for(int bin =0; i < fftResult.size(); i++){
+      float currPhase = std::arg(fftResult.at(bin));
+      float lastPhase = lastPhases.at(bin);
+      auto  phaseDiff = lastPhases.at(bin) - currPhase;
+      float omega = (2 * std::numbers::pi_v<float> * bin) / framesize; //phase advance per sample
       float  timeDelta = analysisHopsize / sampleRate;
-
+      float phaseAdv = omega * analysisHopsize; //expected phase advance 
+      float phaseErr = (currPhase - lastPhase) - phaseAdv; //phase error
+      phaseErr = audiostretch::wrapPi(phaseErr);
       float IF = omega;
       std::cout << phaseDiff << " ";
       lastPhases.at(i) = currPhase;
